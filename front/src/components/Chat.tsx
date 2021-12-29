@@ -3,11 +3,13 @@ import { context } from '../App'
 import { io } from 'socket.io-client'
 import Screen from './Screen';
 import Input from './Input';
+import Users from './Users';
 
 export const chatContext = createContext<Partial<solveTypes.chatContext>>({})
 
 export default function Chat() {
     const [chat, setChat] = useState<solveTypes.chatState[]>([]);
+    const [users, setUsers] = useState<string[]>([]);
     const { user } = useContext(context);
     const socket = useRef<any>(null);
     
@@ -18,6 +20,10 @@ export default function Chat() {
         return [...prevState, { name: "server", message: msg }];
       });
     });
+    socket.current.on("participents", (patricipents: string[])=>{
+        setUsers([...patricipents, ])
+    })
+
     socket.current.on("messageBack", ({ name, message }: solveTypes.chatState) => {
         setChat((prevState: solveTypes.chatState[]) => {
             return [...prevState, { name, message }];
@@ -29,9 +35,10 @@ export default function Chat() {
 
   return (
         <div className="chat">
-    <chatContext.Provider value= {{chat, setChat, socket}}>
+    <chatContext.Provider value= {{chat, setChat, socket, users}}>
         <Screen />
         <Input />
+        <Users />
     </chatContext.Provider>
      
     </div>

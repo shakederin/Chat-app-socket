@@ -9,6 +9,7 @@ declare namespace solveTypes {
       chat: chatState[];
       setChat: React.Dispatch<React.SetStateAction<chatState[]>>;
       socket: React.MutableRefObject<any>; 
+      users : string[]
     }
   }
   
