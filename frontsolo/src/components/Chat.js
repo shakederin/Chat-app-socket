@@ -5,12 +5,15 @@ import { context } from '../App';
 export default function Chat() {
   const { user } = useContext(context);
   const [chat, setChat] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [sendToUser, setSendToUser] = useState("");
   const msg = useRef(null)
   const socket = useRef(null)
 
     const send = () =>{
       socket.current.emit("sendMessage", ({user, msg: msg.current.value}))
-      console.log(user, msg.current.value);
+      msg.current.value="";
+
     }
     
     const displayMsg = () =>{
@@ -19,23 +22,47 @@ export default function Chat() {
       })
       return screen
     }
-    // socket.on("reciveMsg", (user: string, message: string)=>{
-      //   setChat([...chat, {user, message}])
-      // })
-      
-      useEffect(()=>{
-        socket.current = io("http://localhost:3005");  
-        
-        socket.current.on("changeChat", ({user, msg})=>{
-          setChat((pre)=>{return[...pre, {user, msg}]})
+
+    const sendPrivateMsg = ()=>{
+      socket.current.emit("sendPrivate",
+       ({name: sendToUser, msg:msg.current.value}))
+       setSendToUser("")
+       msg.current.value="";
+    }
+
+    const displayUsers = () =>{
+      const screen = users.map((name, i)=>{
+        return  <div onClick={()=>setSendToUser(name)}
+                    key={i}>{name}
+                </div>
       })
+      return screen
+    }
+    
+    useEffect(()=>{
+      socket.current = io("http://localhost:3005");  
+      socket.current.on("changeChat", ({user, msg})=>{
+        setChat((pre)=>{return[...pre, {user, msg}]})
+      })
+      socket.current.on("showUsers", (allUsers)=>{
+        setUsers([...allUsers])
+      }) 
+      
+      socket.current.emit("join", (user))
     }, [])
   
     return (
       <div className="App">
-        <input ref={msg} type="text" placeholder='message'/>
-        <button onClick={send}>send</button>
         {displayMsg()}
+        <input ref={msg} type="text" placeholder='message'/>
+        {!sendToUser
+        ?
+        <button onClick={send}>send</button>
+        :
+        <button onClick={sendPrivateMsg}>send to {sendToUser}</button>
+        }
+        
+        {displayUsers()}
       </div>
     );
 }

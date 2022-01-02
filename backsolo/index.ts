@@ -7,22 +7,47 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer)
 
+app.get("/", (_req,res)=>{
+  res.send(getAllNames())
+})
 
-// const usersArr = [];
+const USERS=[]
+
+function getAllNames(){
+  return USERS.map((userInfo)=>{
+    return userInfo.userName
+  })
+}
 
 
 io.on('connection', (socket) => {
   console.log(`${socket.id} connected`);
-
   socket.on("sendMessage", ({user, msg})=>{  
-    console.log(socket);
     io.emit("changeChat", ({user, msg}))
   })
+  socket.on("sendPrivate", ({name, msg})=>{
+    const res = USERS.find((userInfo)=>{
+      return userInfo.userName === name
+    })
+    socket.broadcast.to(res.id).emit("changeChat",
+     {user: socket.data.username, msg})
+  })
 
-  // usersArr.push(socket);
-  socket.on('disconnect', (socket) => {
-    console.log('user disconnected');
-    // usersArr.splice(usersArr.indexOf(socket),1)
+  socket.on("join", (userName)=>{   
+    USERS.push({userName, id:socket.id})
+    socket.data.username = userName;
+    io.emit("showUsers", (getAllNames()))
+    io.emit("changeChat", ({user: userName, msg:"join the room"}))
+  })
+  socket.on('disconnect', (sockett) => {
+    const name = socket.data.username;
+    io.emit("changeChat", ({user: name, msg:"left the room"}));
+    const index = USERS.findIndex((userInfo)=>{
+      return userInfo.userName === name
+    })
+    USERS.splice(index, 1);
+    io.emit("showUsers", (getAllNames()))
+    console.log(`${name} disconnected`);
   });
 });
 

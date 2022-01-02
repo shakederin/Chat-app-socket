@@ -11,14 +11,10 @@ function App() {
   const [user, setUser] = useState("");
   const [logged, setLogged] = useState(false);
 
-  useEffect(()=>{
-    
-  }, [])
-
   return (
     <context.Provider value={{ setLogged, user, setUser }}>
-      {logged !== false ? <Chat /> : <Login />}
-      </context.Provider>
+      {logged ? <Chat /> : <Login />}
+    </context.Provider>
   );
 }
 
